@@ -21,6 +21,7 @@
 
         // ASP.NET json date format regex
         aspNetJsonRegex = /^\/?Date\((\-?\d+)/i,
+        aspNetTimeSpanJsonRegex = /(\-)?(\d*)?\.?(\d+)\:(\d+)\:(\d+)\.?(\d{3})?/,
 
         // format tokens
         formattingTokens = /(\[[^\[]*\])|(\\)?(Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|YYYYY|YYYY|YY|a|A|hh?|HH?|mm?|ss?|SS?S?|X|zz?|ZZ?|.)/g,
@@ -328,6 +329,9 @@
         return diffs + lengthDiff;
     }
 
+    function intZero(x) {
+        return (typeof x !== 'undefined') ? parseInt(x, 10) || 0 : 0;
+    }
 
     /************************************
         Languages
@@ -970,6 +974,7 @@
         var isDuration = moment.isDuration(input),
             isNumber = (typeof input === 'number'),
             duration = (isDuration ? input._data : (isNumber ? {} : input)),
+            matched = aspNetTimeSpanJsonRegex.exec(input),
             ret;
 
         if (isNumber) {
@@ -978,6 +983,16 @@
             } else {
                 duration.milliseconds = input;
             }
+        } else if (matched) {
+            var sign = (matched[1] == "-") ? -1 : 1;
+            duration = {
+                y: 0,
+                d: sign * intZero(matched[2]),
+                h: sign * intZero(matched[3]),
+                m: sign * intZero(matched[4]),
+                s: sign * intZero(matched[5]),
+                ms: sign * intZero(matched[6])
+            };
         }
 
         ret = new Duration(duration);
@@ -985,7 +1000,6 @@
         if (isDuration && input.hasOwnProperty('_lang')) {
             ret._lang = input._lang;
         }
-
         return ret;
     };
 
